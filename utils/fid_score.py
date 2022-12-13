@@ -23,12 +23,12 @@ import pathlib
 import warnings
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from imageio import imread
 from scipy import linalg
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-
+tf.disable_v2_behavior()
 
 class InvalidFIDException(Exception):
     pass

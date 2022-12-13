@@ -8,7 +8,7 @@ import sys
 import tarfile
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from six.moves import urllib
 from tqdm import tqdm
 
@@ -22,6 +22,7 @@ softmax = None
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
+tf.disable_v2_behavior()
 
 # Call this function with list of images. Each of elements should be a
 # numpy array with values ranging from 0 to 255.
@@ -36,6 +37,8 @@ def get_inception_score(images, splits=10):
         img = img.astype(np.float32)
         inps.append(np.expand_dims(img, 0))
     bs = 100
+    tf.disable_v2_behavior()
+    tf.disable_eager_execution()
     with tf.Session(config=config) as sess:
         preds = []
         n_batches = int(math.ceil(float(len(inps)) / float(bs)))
@@ -61,6 +64,8 @@ def get_inception_score(images, splits=10):
 
 # This function is called automatically.
 def _init_inception():
+    tf.disable_eager_execution()
+    tf.disable_v2_behavior()
     global softmax
     if not os.path.exists(MODEL_DIR):
         os.makedirs(MODEL_DIR)

@@ -344,7 +344,8 @@ def validate(args, fixed_z, fid_stat, gen_net: nn.Module, writer_dict, clean_dir
     gen_net = gen_net.eval()
 
     # generate images
-    sample_imgs = gen_net(fixed_z)
+    with torch.no_grad():
+        sample_imgs = gen_net(fixed_z)
     img_grid = make_grid(sample_imgs, nrow=5, normalize=True, scale_each=True)
 
     # get fid and inception score

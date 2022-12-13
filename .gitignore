@@ -1,0 +1,4 @@
+data/
+fid_stat/
+logs/
+*__pycache__/
