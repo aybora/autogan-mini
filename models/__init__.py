@@ -7,6 +7,6 @@
 from __future__ import absolute_import, division, print_function
 
 import models.autogan_cifar10_a
-import models.autogan-mini_cifar10_a
+import models.autogan_mini_cifar10_a
 import models.autogan_cifar10_b
 import models.autogan_cifar10_c
