@@ -22,10 +22,10 @@ def parse_args():
         "--max_epoch", type=int, default=200, help="number of epochs of training"
     )
     parser.add_argument(
-        "--max_iter", type=int, default=None, help="set the max iteration number"
+        "--max_iter", type=int, default=50000, help="set the max iteration number"
     )
     parser.add_argument(
-        "-gen_bs", "--gen_batch_size", type=int, default=64, help="size of the batches"
+        "-gen_bs", "--gen_batch_size", type=int, default=128, help="size of the batches"
     )
     parser.add_argument(
         "-dis_bs", "--dis_batch_size", type=int, default=64, help="size of the batches"
@@ -72,7 +72,7 @@ def parse_args():
     parser.add_argument(
         "--n_critic",
         type=int,
-        default=1,
+        default=5,
         help="number of training steps for discriminator per iter",
     )
     parser.add_argument(
@@ -82,7 +82,7 @@ def parse_args():
         "--print_freq", type=int, default=100, help="interval between each verbose"
     )
     parser.add_argument("--load_path", type=str, help="The reload model path")
-    parser.add_argument("--exp_name", type=str, help="The name of exp")
+    parser.add_argument("--exp_name", type=str, default="autogan-mini_cifar10_a", help="The name of exp")
     parser.add_argument(
         "--d_spectral_norm",
         type=str2bool,
@@ -107,16 +107,16 @@ def parse_args():
         help="The init type",
     )
     parser.add_argument(
-        "--gf_dim", type=int, default=64, help="The base channel num of gen"
+        "--gf_dim", type=int, default=256, help="The base channel num of gen"
     )
     parser.add_argument(
-        "--df_dim", type=int, default=64, help="The base channel num of disc"
+        "--df_dim", type=int, default=128, help="The base channel num of disc"
     )
     parser.add_argument(
-        "--gen_model", type=str, default="shared_gan", help="path of gen model"
+        "--gen_model", type=str, default="autogan_mini_cifar10_a", help="path of gen model"
     )
     parser.add_argument(
-        "--dis_model", type=str, default="shared_gan", help="path of dis model"
+        "--dis_model", type=str, default="autogan_mini_cifar10_a", help="path of dis model"
     )
     parser.add_argument(
         "--controller", type=str, default="controller", help="path of controller"

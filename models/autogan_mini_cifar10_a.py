@@ -17,10 +17,10 @@ class Generator(nn.Module):
         self.bottom_width = args.bottom_width
         self.l1 = nn.Linear(args.latent_dim, (self.bottom_width ** 2) * args.gf_dim)
         self.cell1 = Cell(
-            args.gf_dim, args.gf_dim, "nearest", num_skip_in=0, short_cut=True
+            args.gf_dim, args.gf_dim, "nearest", num_skip_in=0, short_cut=True, scale_factor=2
         )
         self.cell2 = Cell(
-            args.gf_dim, args.gf_dim, "nearest", num_skip_in=1, short_cut=True
+            args.gf_dim, args.gf_dim, "nearest", num_skip_in=1, short_cut=True, scale_factor=4
         )
         #self.cell3 = Cell(
         #    args.gf_dim, args.gf_dim, "nearest", num_skip_in=2, short_cut=False

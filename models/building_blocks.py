@@ -21,6 +21,7 @@ class Cell(nn.Module):
         num_skip_in=0,
         short_cut=False,
         norm=None,
+        scale_factor=2
     ):
         super(Cell, self).__init__()
         self.c1 = nn.Conv2d(in_channels, out_channels, ksize, padding=ksize // 2)
@@ -28,6 +29,7 @@ class Cell(nn.Module):
         assert up_mode in UP_MODES
         self.up_mode = up_mode
         self.norm = norm
+        self.scale_factor = scale_factor
         if norm:
             assert norm in NORMS
             if norm == "bn":
@@ -61,7 +63,7 @@ class Cell(nn.Module):
         if self.norm:
             residual = self.n1(residual)
         h = nn.ReLU()(residual)
-        h = F.interpolate(h, scale_factor=2, mode=self.up_mode)
+        h = F.interpolate(h, scale_factor=self.scale_factor, mode=self.up_mode)
         _, _, ht, wt = h.size()
         h = self.c1(h)
         h_skip_out = h
@@ -78,7 +80,7 @@ class Cell(nn.Module):
 
         # shortcut
         if self.c_sc:
-            final_out += self.c_sc(F.interpolate(x, scale_factor=2, mode=self.up_mode))
+            final_out += self.c_sc(F.interpolate(x, scale_factor=self.scale_factor, mode=self.up_mode))
 
         return h_skip_out, final_out
 
