@@ -288,9 +288,16 @@ def distill(
 
         teach_real_validity = teach_dis_net(real_imgs)
         teach_fake_validity = teach_dis_net(fake_imgs)
+        
+        real_prob = torch.nn.functional.softmax(real_validity, dim=0)
+        fake_prob = torch.nn.functional.softmax(fake_validity, dim=0)
+        
+        teach_real_prob = torch.nn.functional.softmax(teach_real_validity, dim=0)
+        teach_fake_prob = torch.nn.functional.softmax(teach_fake_validity, dim=0)
+        
 
-        distill_d_real_loss = distill_loss_fn(real_validity, teach_real_validity)
-        distill_d_fake_loss = distill_loss_fn(fake_validity, teach_fake_validity)
+        distill_d_real_loss = distill_loss_fn(real_prob, teach_real_prob)
+        distill_d_fake_loss = distill_loss_fn(fake_prob, teach_fake_prob)
 
         # cal loss
         d_loss = torch.mean(nn.ReLU(inplace=True)(1.0 - real_validity)) + torch.mean(
@@ -315,13 +322,18 @@ def distill(
             )
             gen_imgs = gen_net(gen_z)
             fake_validity = dis_net(gen_imgs)
-
+            
             teach_fake_validity = teach_dis_net(gen_imgs)
-            g_dist_loss = distill_loss_fn(fake_validity, teach_fake_validity)
+
+            fake_prob = torch.nn.functional.softmax(fake_validity, dim=0)
+            
+            teach_fake_prob = torch.nn.functional.softmax(teach_fake_validity, dim=0)
+            
+            g_dist_loss = distill_loss_fn(fake_prob, teach_fake_prob)
 
             # cal loss
             g_loss = -torch.mean(fake_validity)
-            (g_loss+g_dist_loss).backward()
+            (g_loss + g_dist_loss).backward()
             gen_optimizer.step()
 
             # adjust learning rate
@@ -343,7 +355,7 @@ def distill(
         # verbose
         if gen_step and iter_idx % args.print_freq == 0:
             tqdm.write(
-                "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
+                "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f] [D dist loss: %f] [G dist loss: %f]"
                 % (
                     epoch,
                     args.max_epoch,
@@ -351,6 +363,8 @@ def distill(
                     len(train_loader),
                     d_loss.item(),
                     g_loss.item(),
+                    d_dist_loss.item(),
+                    g_dist_loss.item(),
                 )
             )
 
