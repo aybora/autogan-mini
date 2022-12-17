@@ -18,7 +18,7 @@ from tqdm import tqdm
 import cfg
 import datasets
 import models  # noqa
-from functions import copy_params, LinearLrDecay, load_params, train, validate
+from functions import copy_params, LinearLrDecay, load_params, train, validate, distill
 from utils.fid_score import check_or_download_inception, create_inception_graph
 from utils.inception_score import _init_inception
 from utils.utils import create_logger, save_checkpoint, set_log_dir
@@ -39,6 +39,19 @@ def main():
     # import network
     gen_net = eval("models." + args.gen_model + ".Generator")(args=args).cuda()
     dis_net = eval("models." + args.dis_model + ".Discriminator")(args=args).cuda()
+
+    if args.teacher_gen_model != "":
+        teach_gen_net = eval("models." + args.teacher_gen_model + ".Generator")(args=args).cuda()
+        teach_dis_net = eval("models." + args.teacher_dis_model + ".Discriminator")(args=args).cuda()
+
+        logger.info(f"=> loading teacher model {args.teacher_path}")
+        checkpoint_file = args.teacher_path
+        assert os.path.exists(checkpoint_file)
+        checkpoint = torch.load(checkpoint_file)
+
+        teach_gen_net.load_state_dict(checkpoint["gen_state_dict"])
+        teach_dis_net.load_state_dict(checkpoint["dis_state_dict"])
+        logger.info(f"=> loaded teacher model {checkpoint_file}")
 
     # weight init
     def weights_init(m):
@@ -142,18 +155,35 @@ def main():
         range(int(start_epoch), int(args.max_epoch)), desc="total progress"
     ):
         lr_schedulers = (gen_scheduler, dis_scheduler) if args.lr_decay else None
-        train(
-            args,
-            gen_net,
-            dis_net,
-            gen_optimizer,
-            dis_optimizer,
-            gen_avg_param,
-            train_loader,
-            epoch,
-            writer_dict,
-            lr_schedulers,
-        )
+
+        if args.teacher_gen_model != "":
+            distill(
+                args,
+                gen_net,
+                dis_net,
+                teach_gen_net,
+                teach_dis_net,
+                gen_optimizer,
+                dis_optimizer,
+                gen_avg_param,
+                train_loader,
+                epoch,
+                writer_dict,
+                lr_schedulers,
+            )
+        else:
+            train(
+                args,
+                gen_net,
+                dis_net,
+                gen_optimizer,
+                dis_optimizer,
+                gen_avg_param,
+                train_loader,
+                epoch,
+                writer_dict,
+                lr_schedulers,
+            )
 
         if epoch and epoch % args.val_freq == 0 or epoch == int(args.max_epoch) - 1:
             backup_param = copy_params(gen_net)

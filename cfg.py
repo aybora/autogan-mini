@@ -82,6 +82,7 @@ def parse_args():
         "--print_freq", type=int, default=100, help="interval between each verbose"
     )
     parser.add_argument("--load_path", type=str, help="The reload model path")
+    parser.add_argument("--teacher_path", type=str, help="Teacher model path")
     parser.add_argument("--exp_name", type=str, default="autogan-mini_cifar10_a", help="The name of exp")
     parser.add_argument(
         "--d_spectral_norm",
@@ -117,6 +118,12 @@ def parse_args():
     )
     parser.add_argument(
         "--dis_model", type=str, default="autogan_mini_cifar10_a", help="path of dis model"
+    )
+    parser.add_argument(
+        "--teach_gen_model", type=str, default="", help="path of gen model"
+    )
+    parser.add_argument(
+        "--teach_dis_model", type=str, default="", help="path of dis model"
     )
     parser.add_argument(
         "--controller", type=str, default="controller", help="path of controller"

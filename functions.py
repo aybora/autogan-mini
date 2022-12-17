@@ -237,6 +237,122 @@ def train(
 
         writer_dict["train_global_steps"] = global_steps + 1
 
+def distill(
+    args,
+    gen_net: nn.Module,
+    dis_net: nn.Module,
+    teach_gen_net: nn.Module,
+    teach_dis_net: nn.Module,
+    gen_optimizer,
+    dis_optimizer,
+    gen_avg_param,
+    train_loader,
+    epoch,
+    writer_dict,
+    schedulers=None,
+):
+    writer = writer_dict["writer"]
+    gen_step = 0
+
+    distill_loss_fn = torch.nn.MSELoss()
+
+    # train mode
+    gen_net = gen_net.train()
+    dis_net = dis_net.train()
+
+    #eval for teacher
+    teach_gen_net = teach_gen_net.eval()
+    teach_dis_net = teach_dis_net.eval()
+
+    for iter_idx, (imgs, _) in enumerate(tqdm(train_loader)):
+        global_steps = writer_dict["train_global_steps"]
+
+        # Adversarial ground truths
+        real_imgs = imgs.type(torch.cuda.FloatTensor)
+
+        # Sample noise as generator input
+        z = torch.cuda.FloatTensor(
+            np.random.normal(0, 1, (imgs.shape[0], args.latent_dim))
+        )
+
+        # ---------------------
+        #  Train Discriminator
+        # ---------------------
+        dis_optimizer.zero_grad()
+
+        real_validity = dis_net(real_imgs)
+        fake_imgs = gen_net(z).detach()
+        assert fake_imgs.size() == real_imgs.size()
+
+        fake_validity = dis_net(fake_imgs)
+
+        teach_real_validity = teach_dis_net(real_imgs)
+        teach_fake_validity = teach_dis_net(fake_imgs)
+
+        distill_d_real_loss = distill_loss_fn(real_validity, teach_real_validity)
+        distill_d_fake_loss = distill_loss_fn(fake_validity, teach_fake_validity)
+
+        # cal loss
+        d_loss = torch.mean(nn.ReLU(inplace=True)(1.0 - real_validity)) + torch.mean(
+            nn.ReLU(inplace=True)(1 + fake_validity)
+        )
+        d_dist_loss = distill_d_real_loss + distill_d_fake_loss
+        (d_loss + d_dist_loss).backward()
+        dis_optimizer.step()
+
+        writer.add_scalar("d_loss", d_loss.item(), global_steps)
+
+        # -----------------
+        #  Train Generator
+        # -----------------
+        if global_steps % args.n_critic == 0:
+            gen_optimizer.zero_grad()
+
+            gen_z = torch.cuda.FloatTensor(
+                np.random.normal(0, 1, (args.gen_batch_size, args.latent_dim))
+            )
+            gen_imgs = gen_net(gen_z)
+            fake_validity = dis_net(gen_imgs)
+
+            teach_fake_validity = teach_dis_net(fake_imgs)
+            distill_g_loss = distill_loss_fn(fake_validity, teach_fake_validity)
+
+            # cal loss
+            g_loss = -torch.mean(fake_validity)
+            (g_loss+distill_g_loss).backward()
+            gen_optimizer.step()
+
+            # adjust learning rate
+            if schedulers:
+                gen_scheduler, dis_scheduler = schedulers
+                g_lr = gen_scheduler.step(global_steps)
+                d_lr = dis_scheduler.step(global_steps)
+                writer.add_scalar("LR/g_lr", g_lr, global_steps)
+                writer.add_scalar("LR/d_lr", d_lr, global_steps)
+
+            # moving average weight
+            for p, avg_p in zip(gen_net.parameters(), gen_avg_param):
+                avg_p.mul_(0.999).add_(0.001, p.data)
+
+            writer.add_scalar("g_loss", g_loss.item(), global_steps)
+            gen_step += 1
+
+        # verbose
+        if gen_step and iter_idx % args.print_freq == 0:
+            tqdm.write(
+                "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
+                % (
+                    epoch,
+                    args.max_epoch,
+                    iter_idx % len(train_loader),
+                    len(train_loader),
+                    d_loss.item(),
+                    g_loss.item(),
+                )
+            )
+
+        writer_dict["train_global_steps"] = global_steps + 1
+
 
 def train_controller(
     args, controller, ctrl_optimizer, gen_net, prev_hiddens, prev_archs, writer_dict
