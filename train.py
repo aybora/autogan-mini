@@ -44,14 +44,12 @@ def main():
         teach_gen_net = eval("models." + args.teacher_gen_model + ".Generator")(args=args).cuda()
         teach_dis_net = eval("models." + args.teacher_dis_model + ".Discriminator")(args=args).cuda()
 
-        logger.info(f"=> loading teacher model {args.teacher_path}")
         checkpoint_file = args.teacher_path
         assert os.path.exists(checkpoint_file)
         checkpoint = torch.load(checkpoint_file)
 
         teach_gen_net.load_state_dict(checkpoint["gen_state_dict"])
         teach_dis_net.load_state_dict(checkpoint["dis_state_dict"])
-        logger.info(f"=> loaded teacher model {checkpoint_file}")
 
     # weight init
     def weights_init(m):

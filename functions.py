@@ -301,6 +301,8 @@ def distill(
         dis_optimizer.step()
 
         writer.add_scalar("d_loss", d_loss.item(), global_steps)
+        
+        writer.add_scalar("d_dist_loss", d_dist_loss.item(), global_steps)
 
         # -----------------
         #  Train Generator
@@ -314,12 +316,12 @@ def distill(
             gen_imgs = gen_net(gen_z)
             fake_validity = dis_net(gen_imgs)
 
-            teach_fake_validity = teach_dis_net(fake_imgs)
-            distill_g_loss = distill_loss_fn(fake_validity, teach_fake_validity)
+            teach_fake_validity = teach_dis_net(gen_imgs)
+            g_dist_loss = distill_loss_fn(fake_validity, teach_fake_validity)
 
             # cal loss
             g_loss = -torch.mean(fake_validity)
-            (g_loss+distill_g_loss).backward()
+            (g_loss+g_dist_loss).backward()
             gen_optimizer.step()
 
             # adjust learning rate
@@ -335,6 +337,7 @@ def distill(
                 avg_p.mul_(0.999).add_(0.001, p.data)
 
             writer.add_scalar("g_loss", g_loss.item(), global_steps)
+            writer.add_scalar("g_dist_loss", g_dist_loss.item(), global_steps)
             gen_step += 1
 
         # verbose

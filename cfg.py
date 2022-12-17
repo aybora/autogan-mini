@@ -120,10 +120,10 @@ def parse_args():
         "--dis_model", type=str, default="autogan_mini_cifar10_a", help="path of dis model"
     )
     parser.add_argument(
-        "--teach_gen_model", type=str, default="", help="path of gen model"
+        "--teacher_gen_model", type=str, default="", help="path of gen model"
     )
     parser.add_argument(
-        "--teach_dis_model", type=str, default="", help="path of dis model"
+        "--teacher_dis_model", type=str, default="", help="path of dis model"
     )
     parser.add_argument(
         "--controller", type=str, default="controller", help="path of controller"
