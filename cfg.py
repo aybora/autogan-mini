@@ -37,6 +37,12 @@ def parse_args():
         "--d_lr", type=float, default=0.0002, help="adam: disc learning rate"
     )
     parser.add_argument(
+        "--d_temp", type=float, default=1, help="disc temperature"
+    )
+    parser.add_argument(
+        "--g_temp", type=float, default=1, help="gen temperature"
+    )    
+    parser.add_argument(
         "--ctrl_lr", type=float, default=3.5e-4, help="adam: ctrl learning rate"
     )
     parser.add_argument(

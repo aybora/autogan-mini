@@ -245,6 +245,8 @@ def distill(
     teach_dis_net: nn.Module,
     gen_optimizer,
     dis_optimizer,
+    d_temp,
+    g_temp,
     gen_avg_param,
     train_loader,
     epoch,
@@ -289,11 +291,11 @@ def distill(
         teach_real_validity = teach_dis_net(real_imgs)
         teach_fake_validity = teach_dis_net(fake_imgs)
         
-        real_prob = torch.nn.functional.softmax(real_validity, dim=0)
-        fake_prob = torch.nn.functional.softmax(fake_validity, dim=0)
+        real_prob = torch.nn.functional.softmax(real_validity/d_temp, dim=0)
+        fake_prob = torch.nn.functional.softmax(fake_validity/d_temp, dim=0)
         
-        teach_real_prob = torch.nn.functional.softmax(teach_real_validity, dim=0)
-        teach_fake_prob = torch.nn.functional.softmax(teach_fake_validity, dim=0)
+        teach_real_prob = torch.nn.functional.softmax(teach_real_validity/d_temp, dim=0)
+        teach_fake_prob = torch.nn.functional.softmax(teach_fake_validity/d_temp, dim=0)
         
 
         distill_d_real_loss = distill_loss_fn(real_prob, teach_real_prob)
@@ -325,9 +327,9 @@ def distill(
             
             teach_fake_validity = teach_dis_net(gen_imgs)
 
-            fake_prob = torch.nn.functional.softmax(fake_validity, dim=0)
+            fake_prob = torch.nn.functional.softmax(fake_validity/g_temp, dim=0)
             
-            teach_fake_prob = torch.nn.functional.softmax(teach_fake_validity, dim=0)
+            teach_fake_prob = torch.nn.functional.softmax(teach_fake_validity/g_temp, dim=0)
             
             g_dist_loss = distill_loss_fn(fake_prob, teach_fake_prob)
 

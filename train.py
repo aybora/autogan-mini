@@ -50,6 +50,8 @@ def main():
 
         teach_gen_net.load_state_dict(checkpoint["gen_state_dict"])
         teach_dis_net.load_state_dict(checkpoint["dis_state_dict"])
+        d_temp=args.d_temp
+        g_temp=args.g_temp
 
     # weight init
     def weights_init(m):
@@ -163,6 +165,8 @@ def main():
                 teach_dis_net,
                 gen_optimizer,
                 dis_optimizer,
+                d_temp,
+                g_temp,
                 gen_avg_param,
                 train_loader,
                 epoch,
